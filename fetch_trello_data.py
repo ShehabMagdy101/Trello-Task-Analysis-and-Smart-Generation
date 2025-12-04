@@ -78,10 +78,15 @@ df_undone = df[df['done'] == 'No']
 df_undone = df_undone[["list", "card", "card_due"]]
 df_undone.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
 
-# drop data before(inconsistent data)
+# drop data before specified date (inconsistent data)
+# Always convert first
+df = df.copy()
 df['done_date'] = pd.to_datetime(df['done_date'], utc=True)
-cuttoff = pd.Timestamp(settings.START_DATE, tz="UTC")
-df = df[df['done_date'] >= cuttoff]
+
+# Apply cutoff
+cutoff = pd.Timestamp(settings.START_DATE, tz="UTC")
+df = df.loc[df['done_date'] >= cutoff].copy()
+
 
 # save the dataset
 df.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
