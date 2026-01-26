@@ -100,8 +100,14 @@ for action in actions:
 
         # keep FIRST transition only
         if card_id not in done_transitions:
+            origin_list = action_data["listBefore"]["name"]
+            
+            # If origin_list is not in your known lists, mark as "other"
+            if origin_list not in list_map.values():
+                origin_list = "other"
+
             done_transitions[card_id] = {
-                "origin_list": action_data["listBefore"]["name"],
+                "origin_list": origin_list,
                 "done_date": action["date"]
             }
 
