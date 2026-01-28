@@ -47,4 +47,4 @@ Sales,Follow up with leads,2024-01-14"""
 user_notes = "Focus on Marketing list today. Need to finish the Q4 report. Low energy day."
 
 result = generate_daily_tasks(csv_data, user_notes, include_reasoning=False)
-result['tasks']
+print(result['tasks'])

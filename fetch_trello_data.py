@@ -87,57 +87,73 @@ params = {
 response = requests.get(BOARD_ACTIONS_URL, params=params)
 actions = response.json()
 
+actions = sorted(actions, key=lambda x: x['date'])
+
+
 done_transitions = {}
 
 for action in actions:
     action_data = action.get("data", {})
+    if action.get("type") != "updateCard":
+        continue
 
-    if (
-        action_data.get("listAfter", {}).get("name") == DONE_LIST_NAME
-        and action.get("type") == "updateCard"
-    ):
-        card_id = action_data["card"]["id"]
+    list_after = action_data.get("listAfter", {}).get("name")
+    list_before = action_data.get("listBefore", {}).get("name")
+    card_info = action_data.get("card", {})
+    card_id = card_info.get("id")
 
-        # keep FIRST transition only
-        if card_id not in done_transitions:
-            origin_list = action_data["listBefore"]["name"]
-            
-            # If origin_list is not in your known lists, mark as "other"
-            if origin_list not in list_map.values():
-                origin_list = "other"
+    # Only consider first move from a non-Done list to Done
+    if list_after == DONE_LIST_NAME and list_before != DONE_LIST_NAME and card_id not in done_transitions:
+        origin_list = list_before if list_before in list_map.values() else "other"
+        done_transitions[card_id] = {
+            "origin_list": origin_list,
+            "done_date": action["date"]
+        }
 
-            done_transitions[card_id] = {
-                "origin_list": origin_list,
-                "done_date": action["date"]
-            }
 
-for idx, row in data.iterrows():
-    card_id = row["card_id"]
+data['status'] = 'Not Done'  # default
+done_mask = data['card_id'].isin(done_transitions.keys())
 
-    if card_id in done_transitions:
-        data.at[idx, "status"] = 'Done'
-        data.at[idx, 'done_date'] = pd.to_datetime(done_transitions[card_id]['done_date']).tz_localize(None)
-        data.at[idx, 'origin_list'] = done_transitions[card_id]['origin_list']
+# Update only the relevant rows
+data.loc[done_mask, 'status'] = 'Done'
+data.loc[done_mask, 'done_date'] = data.loc[done_mask, 'card_id'].map(
+    lambda x: pd.to_datetime(done_transitions[x]['done_date']).tz_convert(None)
+)
+data.loc[done_mask, 'origin_list'] = data.loc[done_mask, 'card_id'].map(
+    lambda x: done_transitions[x]['origin_list']
+)
 
-data[data["status"] == "Done"]["origin_list"].value_counts()
-data["done_date"] = pd.to_datetime(data["done_date"])
 
-df = data[['list', 'card','origin_list', 'card_age', 'card_due', 'status', 'done_date']]
+undone_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
 
-# save undone dataset
-df_undone = df[df['status'] == 'Not Done']
-df_undone = df_undone[["list", "card", "card_due", "card_age"]]
-df_undone.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
+undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
+today = pd.Timestamp.now(tz='UTC')
+undone_df['overdue'] = undone_df['card_due'].lt(today)
 
-# drop data before specified date (inconsistent data)
-df = df.copy()
-df['done_date'] = pd.to_datetime(df['done_date'], utc=True)
+undone_df['age_score'] = (undone_df['card_age'] / undone_df['card_age'].max()).round(2)
 
-# Apply cutoff
+list_weights = settings.LIST_WEIGHTS
+
+undone_df['list_weight'] = undone_df['list'].map(list_weights).fillna(settings.DEFAULT_LIST_SCORE)
+
+undone_df['impact_score'] = (undone_df['age_score'] * undone_df['list_weight']).round(2)
+undone_df['priority_score'] = (undone_df['impact_score'] + undone_df['overdue'].astype(int)).round(2)
+
+# sort tasks by priority
+undone_df = undone_df.sort_values('priority_score', ascending=False)
+
+# save dataset
+undone_df.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
+
+data['done_date'] = pd.to_datetime(data['done_date'], utc=True)
 cutoff = pd.Timestamp(settings.START_DATE, tz="UTC")
-df = df.loc[df['done_date'] >= cutoff].copy()
+df_done_cutoff = data[(data['status'] == 'Done') & (data['done_date'] >= cutoff)].copy()
 
-# save the full dataset
-df.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
+# save done tasks
+
+df_done_cutoff.to_csv(str(settings.DONE_DATA_PATH))
+
+df_full = data.copy()  # or use df_done_cutoff if you want only filtered Done tasks
+df_full.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
 
 logger.info("Fetching Tasks is Done!")

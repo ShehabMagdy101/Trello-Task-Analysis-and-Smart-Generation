@@ -12,4 +12,4 @@ class DailyTaskPlan(BaseModel):
     tasks: list[Task] = Field(description="List of recommended tasks for today")
     reasoning: str | None = Field(default=None, description="Overall reasoning for the task selection (optional)")
 
-parser = JsonOutputParser(pydantic_object=DailyTaskPlan)   
+parser = JsonOutputParser(pydantic_object=DailyTaskPlan)
