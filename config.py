@@ -12,12 +12,12 @@ class Settings():
         "Tech Projects": 1,
         "علوم شرعية": 0.5,
         "Reading": 0.6,
-        "Writing": 0.8,
-        "Carreer": 0.5,
-        "Planting": 0.1,
-        "House Chores": 0.3,
-        "Work": 0.7,
-        "Fitness": 0.4
+        "Writing": 0.6,
+        "Carreer": 0.8,
+        "Planting": 0.5,
+        "House Chores": 0.2,
+        "Work": 0.4,
+        "Fitness": 0.2
     }
     DEFAULT_LIST_SCORE = 0.5
     OLD_TASK_AGE = 30

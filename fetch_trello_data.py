@@ -127,7 +127,7 @@ data.loc[done_mask, 'origin_list'] = data.loc[done_mask, 'card_id'].map(
 undone_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
 
 undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
-today = pd.Timestamp.now(tz='UTC')
+today = pd.Timestamp.now()
 undone_df['overdue'] = undone_df['card_due'].lt(today)
 
 undone_df['age_score'] = (undone_df['card_age'] / undone_df['card_age'].max()).round(2)

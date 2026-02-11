@@ -20,7 +20,7 @@ chat_prompt = ChatPromptTemplate.from_messages([
     ("user", user_prompt.prompt_text)
 ])
 
-
+{}
 from output_format import parser
 parser = parser
 
@@ -36,15 +36,15 @@ def generate_daily_tasks(csv_data, user_notes: str = "None", include_reasoning:b
     return response
 
 
-# Example usage
-csv_data = """list,card,card_due
-Marketing,Q4 Report,2024-01-15
-Development,Fix login bug,2024-01-14
-Marketing,Social media posts,2024-01-16
-Development,Update documentation,2024-01-20
-Sales,Follow up with leads,2024-01-14"""
+# # Example usage
+# csv_data = """list,card,card_due
+# Marketing,Q4 Report,2024-01-15
+# Development,Fix login bug,2024-01-14
+# Marketing,Social media posts,2024-01-16
+# Development,Update documentation,2024-01-20
+# Sales,Follow up with leads,2024-01-14"""
 
-user_notes = "Focus on Marketing list today. Need to finish the Q4 report. Low energy day."
+# user_notes = "Focus on Marketing list today. Need to finish the Q4 report. Low energy day."
 
-result = generate_daily_tasks(csv_data, user_notes, include_reasoning=False)
-print(result['tasks'])
+# result = generate_daily_tasks(csv_data, user_notes, include_reasoning=False)
+# print(result['tasks'])

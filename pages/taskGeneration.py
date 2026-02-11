@@ -3,6 +3,11 @@ import streamlit as st
 import pandas as pd
 from config import settings
 
+st.set_page_config(
+    layout="centered",   # or "centered"
+    page_title="My App"
+)
+
 # Generate Tasks
 from model import generate_daily_tasks
 st.divider()
