@@ -1,6 +1,7 @@
 import logging
 import requests
 import pandas as pd
+import numpy as np
 from datetime import datetime, timezone
 from config import settings
 from dotenv import dotenv_values
@@ -10,18 +11,22 @@ logger = logging.getLogger(__name__)
 
 env_values = dotenv_values("./app.env")
 
+# secrets
 APIKey = env_values['TRELLO_API_KEY']
 APIToken = env_values['TRELLO_API_TOKEN']
+
+# constants
 Board_ID = env_values['BOARD_ID']
+BASE_URL = f"https://api.trello.com/1/boards/{Board_ID}"
+url_cards = f"{BASE_URL}/cards"
+url_lists = f"{BASE_URL}/lists"
+BOARD_ACTIONS_URL = f"{BASE_URL}/actions"
+DONE_LIST_NAME = settings.DONE_LIST_NAME
 
 query = {
   'key': APIKey,
   'token': APIToken
 }
-
-BASE_URL = f"https://api.trello.com/1/boards/{Board_ID}"
-url_cards = f"{BASE_URL}/cards"
-url_lists = f"{BASE_URL}/lists"
 
 def calculate_card_age_days(date_last_activity: str) -> int:
     last_activity = datetime.fromisoformat(
@@ -48,9 +53,9 @@ response_lists = requests.request(
    url_lists,
    params=query
 )
+lists = response_lists.json()
 
 current_lists_ids = []
-lists = response_lists.json()
 for list in lists:
     current_lists_ids.append(list['id'])
 
@@ -66,32 +71,24 @@ for card in cards:
         'card_age': calculate_card_age_days(card['dateLastActivity'])
         })    
     
-data = pd.DataFrame(list_data)
-
-DONE_LIST_NAME = settings.DONE_LIST_NAME
+data = pd.DataFrame(list_data) 
 
 # add columns
 data["status"] = "Not Done"
 data["done_date"] = pd.NaT
 data['origin_list'] = None
 
-# Get all actions in one API call
-BOARD_ACTIONS_URL = f"https://api.trello.com/1/boards/{Board_ID}/actions"
-
 params = {
     **query,
     "filter": "updateCard:idList",  # only list moves
-    "limit": 1000                   # increase if needed
+    # "limit": 1000                   # increase if needed
 }
 
 response = requests.get(BOARD_ACTIONS_URL, params=params)
 actions = response.json()
-
 actions = sorted(actions, key=lambda x: x['date'])
 
-
 done_transitions = {}
-
 for action in actions:
     action_data = action.get("data", {})
     if action.get("type") != "updateCard":
@@ -110,8 +107,6 @@ for action in actions:
             "done_date": action["date"]
         }
 
-
-data['status'] = 'Not Done'  # default
 done_mask = data['card_id'].isin(done_transitions.keys())
 
 # Update only the relevant rows
@@ -124,36 +119,103 @@ data.loc[done_mask, 'origin_list'] = data.loc[done_mask, 'card_id'].map(
 )
 
 
+# Mark cards currently in Done list
+data.loc[data['list'] == DONE_LIST_NAME, 'status'] = 'Done'
+# create undone dataset
 undone_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
 
+# normalize timestamp
 undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
-today = pd.Timestamp.now()
-undone_df['overdue'] = undone_df['card_due'].lt(today)
+today = pd.Timestamp.now().normalize()  # tz-naive
 
-undone_df['age_score'] = (undone_df['card_age'] / undone_df['card_age'].max()).round(2)
+# Task Priority Calculation
+days_plan = {
+        "Friday": {
+            "main": "Carreer",
+            "seconday": "Writing"
+            },
+        "Saturday": {
+            "main":"Tech Study",
+            "secondary": "Reading"
+            },
+        "Sunday": {
+            "main":"علوم شرعية",
+            "secondary": "work"
+            },  
+        "Monday": {
+            "main":"Tech Study",
+            "secondary": "Tech Projects"
+            },           
+        "Tuesday": {
+            "main":"Tech Projects",
+            "secondary": "Tech Study"
+            },
+        "Wednesday": {
+            "main":"House Chores",
+            "secondary": "Reading"
+            },
+        "Thursday": {
+            "main":"Tech Study",
+            "secondary": "Tech Projects"
+            },    
+    }
 
-list_weights = settings.LIST_WEIGHTS
+def due_score(days):
+    if pd.isna(days):
+        return 0
+    if days < 0:
+        return 3 + abs(days) * 0.2  # overdue escalation
+    if days <= 2:
+        return 2.5
+    if days <= 5:
+        return 1.5
+    if days <= 10:
+        return 0.7
+    return 0
 
-undone_df['list_weight'] = undone_df['list'].map(list_weights).fillna(settings.DEFAULT_LIST_SCORE)
+def day_alignment(list_name):
+    today_name = today.strftime("%A")
+    day_config = days_plan.get(today_name, {})
+    if list_name == day_config.get("main"):
+        return 2
+    elif list_name == day_config.get("secondary"):
+        return 1
+    return 0
 
-undone_df['impact_score'] = (undone_df['age_score'] * undone_df['list_weight']).round(2)
-undone_df['priority_score'] = (undone_df['impact_score'] + undone_df['overdue'].astype(int)).round(2)
+
+undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
+undone_df['days_to_due'] = (undone_df['card_due'] - today).dt.days
+undone_df['age_score'] = np.log1p(undone_df['card_age']) / 5
+# Apply due score
+undone_df['due_score'] = undone_df['days_to_due'].apply(due_score)
+
+# Apply day alignment
+undone_df['day_alignment'] = undone_df['list'].apply(day_alignment)
+
+undone_df['priority_score'] = (
+    #   4 * undone_df['note_score']      # highest
+    + 3 * undone_df['due_score']       # second
+    + 2 * undone_df['day_alignment']   # third
+    + 1.5 * undone_df['age_score']     # fourth
+    # + 1 * undone_df['list_weight']     # base importance
+)
 
 # sort tasks by priority
 undone_df = undone_df.sort_values('priority_score', ascending=False)
 
-# save dataset
+# save undone dataset
 undone_df.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
 
+# apply time cuttoff
 data['done_date'] = pd.to_datetime(data['done_date'], utc=True)
 cutoff = pd.Timestamp(settings.START_DATE, tz="UTC")
 df_done_cutoff = data[(data['status'] == 'Done') & (data['done_date'] >= cutoff)].copy()
 
-# save done tasks
-
+# save done dataset
 df_done_cutoff.to_csv(str(settings.DONE_DATA_PATH))
 
-df_full = data.copy()  # or use df_done_cutoff if you want only filtered Done tasks
+# save all tasks dataset
+df_full = data.copy()
 df_full.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
 
 logger.info("Fetching Tasks is Done!")

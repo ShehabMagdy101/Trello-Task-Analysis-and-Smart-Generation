@@ -3,7 +3,7 @@ from config import settings
 import streamlit as st
 import plotly.express as px
 
-# --- Page Configuration ---
+
 st.set_page_config(
     page_title="Task Analytics Dashboard",
     page_icon="📊",
@@ -229,7 +229,7 @@ with right:
         y='Cumulative Tasks',
         line_shape='linear'
     )
-    # fig.update_traces(fill='tozeroy', line_color='#3584F3', fillcolor='rgba(149, 225, 211, 0.3)')
+
     fig.update_layout(height=400)
     st.plotly_chart(fig, use_container_width=True)
 
@@ -276,3 +276,46 @@ oldest_tasks = (
 )
 
 st.dataframe(oldest_tasks)
+
+# stacked bar chart
+
+day_order = ['Friday', 'Saturday','Sunday', 'Monday', 'Tuesday', 'Wednesday', 
+             'Thursday' ]
+
+# Extract weekday
+done_df['weekday'] = done_df['done_date'].dt.day_name()
+
+# Order weekdays
+done_df['weekday'] = pd.Categorical(
+    done_df['weekday'],
+    categories=day_order,
+    ordered=True
+)
+
+# Group by weekday AND list
+weekly_df = (
+    done_df
+    .groupby(['weekday', 'origin_list'])
+    .size()
+    .reset_index(name='Tasks Completed')
+    .sort_values('weekday')
+)
+
+# Create stacked bar chart
+fig = px.bar(
+    weekly_df,
+    x='weekday',
+    y='Tasks Completed',
+    color='origin_list',  
+    title='Tasks Completed per Day (Grouped by List)',
+    text='Tasks Completed'
+)
+
+fig.update_layout(
+    barmode='group',
+    height=600
+)
+
+fig.update_traces(textposition='inside')
+
+st.plotly_chart(fig, use_container_width=True)

@@ -5,3 +5,4 @@ notebook
 app.env
 run_app.bat
 build/
+run_app.sh
