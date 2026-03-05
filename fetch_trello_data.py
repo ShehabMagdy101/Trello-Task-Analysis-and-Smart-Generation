@@ -81,7 +81,7 @@ data['origin_list'] = None
 params = {
     **query,
     "filter": "updateCard:idList",  # only list moves
-    # "limit": 1000                   # increase if needed
+    "limit": 1000                   # increase if needed
 }
 
 response = requests.get(BOARD_ACTIONS_URL, params=params)
@@ -118,104 +118,112 @@ data.loc[done_mask, 'origin_list'] = data.loc[done_mask, 'card_id'].map(
     lambda x: done_transitions[x]['origin_list']
 )
 
-
-# Mark cards currently in Done list
-data.loc[data['list'] == DONE_LIST_NAME, 'status'] = 'Done'
-# create undone dataset
-undone_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
-
-# normalize timestamp
-undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
-today = pd.Timestamp.now().normalize()  # tz-naive
-
-# Task Priority Calculation
-days_plan = {
-        "Friday": {
-            "main": "Carreer",
-            "seconday": "Writing"
-            },
-        "Saturday": {
-            "main":"Tech Study",
-            "secondary": "Reading"
-            },
-        "Sunday": {
-            "main":"علوم شرعية",
-            "secondary": "work"
-            },  
-        "Monday": {
-            "main":"Tech Study",
-            "secondary": "Tech Projects"
-            },           
-        "Tuesday": {
-            "main":"Tech Projects",
-            "secondary": "Tech Study"
-            },
-        "Wednesday": {
-            "main":"House Chores",
-            "secondary": "Reading"
-            },
-        "Thursday": {
-            "main":"Tech Study",
-            "secondary": "Tech Projects"
-            },    
-    }
-
-def due_score(days):
-    if pd.isna(days):
-        return 0
-    if days < 0:
-        return 3 + abs(days) * 0.2  # overdue escalation
-    if days <= 2:
-        return 2.5
-    if days <= 5:
-        return 1.5
-    if days <= 10:
-        return 0.7
-    return 0
-
-def day_alignment(list_name):
-    today_name = today.strftime("%A")
-    day_config = days_plan.get(today_name, {})
-    if list_name == day_config.get("main"):
-        return 2
-    elif list_name == day_config.get("secondary"):
-        return 1
-    return 0
-
-
-undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
-undone_df['days_to_due'] = (undone_df['card_due'] - today).dt.days
-undone_df['age_score'] = np.log1p(undone_df['card_age']) / 5
-# Apply due score
-undone_df['due_score'] = undone_df['days_to_due'].apply(due_score)
-
-# Apply day alignment
-undone_df['day_alignment'] = undone_df['list'].apply(day_alignment)
-
-undone_df['priority_score'] = (
-    #   4 * undone_df['note_score']      # highest
-    + 3 * undone_df['due_score']       # second
-    + 2 * undone_df['day_alignment']   # third
-    + 1.5 * undone_df['age_score']     # fourth
-    # + 1 * undone_df['list_weight']     # base importance
-)
-
-# sort tasks by priority
-undone_df = undone_df.sort_values('priority_score', ascending=False)
-
-# save undone dataset
-undone_df.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
-
-# apply time cuttoff
-data['done_date'] = pd.to_datetime(data['done_date'], utc=True)
-cutoff = pd.Timestamp(settings.START_DATE, tz="UTC")
-df_done_cutoff = data[(data['status'] == 'Done') & (data['done_date'] >= cutoff)].copy()
-
-# save done dataset
-df_done_cutoff.to_csv(str(settings.DONE_DATA_PATH))
-
-# save all tasks dataset
-df_full = data.copy()
-df_full.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
+# Save Raw Data
+raw_data = data.to_csv(str(settings.RAW_DATA_PATH), index=False, encoding="utf-8")
 
 logger.info("Fetching Tasks is Done!")
+
+
+# Mark cards currently in Done list
+# data.loc[data['list'] == DONE_LIST_NAME, 'status'] = 'Done'
+# # create undone dataset
+# undone_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
+
+# # Normalize timestamp
+# undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
+# today = pd.Timestamp.now().normalize()  # tz-naive
+
+
+# # # Task Priority Calculation
+# # DAYS_PLAN = settings.DAYS_PLAN
+
+# # DAYS_PLAN = {
+# #         "Friday": {
+# #             "main": "Carreer",
+# #             "seconday": "Writing"
+# #             },
+# #         "Saturday": {
+# #             "main":"Tech Study",
+# #             "secondary": "Reading"
+# #             },  
+# #         "Sunday": {
+# #             "main":"علوم شرعية",
+# #             "secondary": "work"
+# #             },  
+# #         "Monday": {
+# #             "main":"Tech Study",
+# #             "secondary": "Tech Projects"
+# #             },           
+# #         "Tuesday": {
+# #             "main":"Tech Projects",
+# #             "secondary": "Tech Study"
+# #             },
+# #         "Wednesday": {
+# #             "main":"House Chores",
+# #             "secondary": "Reading"
+# #             },
+# #         "Thursday": {
+# #             "main":"Tech Study",
+# #             "secondary": "Tech Projects"
+# #             },    
+# #     }
+
+# def due_score(days):
+#     if pd.isna(days):
+#         return 0
+#     if days < 0:
+#         return 3 + abs(days) * 0.2  # overdue escalation
+#     if days <= 2:
+#         return 2.5
+#     if days <= 5:
+#         return 1.5
+#     if days <= 10:
+#         return 0.7
+#     return 0
+
+# # def day_alignment(list_name):
+# #     today_name = today.strftime("%A")
+# #     day_config = DAYS_PLAN.get(today_name, {})
+# #     if list_name == day_config.get("main"):
+# #         return 2
+# #     elif list_name == day_config.get("secondary"):
+# #         return 1
+# #     return 0
+
+
+# undone_df['card_due'] = pd.to_datetime(undone_df['card_due'], errors='coerce')
+# undone_df['days_to_due'] = (undone_df['card_due'] - today).dt.days
+# undone_df['age_score'] = np.log1p(undone_df['card_age']) / 5
+# # Apply due score
+# undone_df['due_score'] = undone_df['days_to_due'].apply(due_score)
+
+# # # Apply day alignment
+# # undone_df['day_alignment'] = undone_df['list'].apply(day_alignment)
+
+# # undone_df['priority_score'] = (
+# #     #   4 * undone_df['note_score']      # highest
+# #     + 3 * undone_df['due_score']       # second
+# #     + 2 * undone_df['day_alignment']   # third
+# #     + 1.5 * undone_df['age_score']     # fourth
+# #     # + 1 * undone_df['list_weight']     # base importance
+# # )
+
+# # # sort tasks by priority
+# # undone_df = undone_df.sort_values('priority_score', ascending=False)
+
+# # save undone dataset
+# undone_df.to_csv(str(settings.UNDONE_DATA_PATH), index=False, encoding="utf-8")
+
+# # apply time cuttoff
+# data['done_date'] = pd.to_datetime(data['done_date'], utc=True)
+# cutoff = pd.Timestamp(settings.START_DATE, tz="UTC")
+# df_done_cutoff = data[(data['status'] == 'Done') & (data['done_date'] >= cutoff)].copy()
+
+# # save done dataset
+# df_done_cutoff.to_csv(str(settings.DONE_DATA_PATH))
+
+# # save all tasks dataset
+# df_full = data.copy()
+# df_full.to_csv(str(settings.ALL_DATA_PATH), index=False, encoding="utf-8")
+
+# logger.info("Fetching Tasks is Done!")
