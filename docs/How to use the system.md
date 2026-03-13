@@ -6,4 +6,3 @@
 5. Don't forget to check the done tasks in the same day its done in
 6. Add tasks excatly under their recommneded list
 7. Don't let a task become so old or it will handeled by the system
-8. 
