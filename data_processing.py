@@ -14,7 +14,7 @@ logger.info("Applying Data Processing")
 # Normalize timestamp
 data['done_date'] = pd.to_datetime(data['done_date'], utc=True)
 pending_df['card_due'] = pd.to_datetime(pending_df['card_due'], errors='coerce')
-today = pd.Timestamp.now().normalize()  # tz-naive
+today = pd.Timestamp.now(tz="UTC") # tz-aware
 
 # Task Priority Calculation
 pending_df['days_to_due'] = (pending_df['card_due'] - today).dt.days

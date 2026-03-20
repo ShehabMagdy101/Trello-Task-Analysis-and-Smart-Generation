@@ -26,10 +26,11 @@ parser = parser
 
 chain = chat_prompt | llm | parser
 
-def generate_daily_tasks(csv_data, user_notes: str = "None", include_reasoning:bool = False):
+def generate_daily_tasks(csv_data, user_notes: str = "None", analytics_summary: str = "None" , include_reasoning:bool = False):
     response =  chain.invoke({
         "csv_data": csv_data,
         "user_notes": user_notes,
+        "analytics_summary": analytics_summary,
         "include_reasoning": "Yes, provide detailed reasoning" if include_reasoning else "No, skip reasoning",
         "format_instructions": parser.get_format_instructions()
         })
