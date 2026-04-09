@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from plotly_calplot import calplot
 from config import settings
 import streamlit as st
 import plotly.express as px
@@ -13,13 +15,13 @@ st.set_page_config(
 def load_data():
     df = pd.read_csv(settings.ALL_DATA_PATH)
     done_df = pd.read_csv(settings.DONE_DATA_PATH)
-
+    pending_df = pd.read_csv(settings.PENDING_DATA_PATH)
     done_df['done_date'] = pd.to_datetime(done_df['done_date'], errors='coerce', utc=True)
     df['card_due'] = pd.to_datetime(df.get('card_due'), errors='coerce')
 
-    return df, done_df
+    return df, done_df, pending_df
 
-df, done_df = load_data()
+df, done_df, pending_df = load_data()
 
 
 start_date = pd.to_datetime(settings.START_DATE).date()
@@ -317,4 +319,40 @@ fig.update_layout(
 
 fig.update_traces(textposition='inside')
 
+st.plotly_chart(fig, use_container_width=True)
+
+
+calplot_start_date = pd.Timestamp.now()
+calplot_end_date = calplot_start_date + pd.Timedelta(days=60)
+
+done_df_calplot = pending_df.copy()
+
+def remove_timezones(str):
+    return str.split()[0]
+
+done_df_calplot = done_df_calplot.dropna(subset=['card_due'])
+done_df_calplot['card_due'] = done_df_calplot['card_due'].astype(str).apply(remove_timezones)
+
+counts_df = done_df_calplot['card_due'].value_counts().reset_index()
+counts_df.columns = ['card_due', 'count']
+fig = calplot(
+    counts_df,
+    x="card_due",
+    y="count",
+    dark_theme=True,
+    title="Pending Tasks Due Dates",
+    colorscale= "blues",
+    month_lines= False,
+    start_month= calplot_start_date.month,
+    end_month= calplot_end_date.month
+)
+
+fig.update_layout(
+    title={
+        'text': "Pending Tasks Due Dates",
+        'y':0.99,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'}
+)
 st.plotly_chart(fig, use_container_width=True)

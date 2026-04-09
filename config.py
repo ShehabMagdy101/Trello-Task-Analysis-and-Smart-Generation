@@ -3,7 +3,7 @@ from pathlib import Path
 class Settings():
     MODEL = "gemini-3-flash-preview"
     RAW_DATA_PATH = Path("./data/raw/raw.csv")
-    UNDONE_DATA_PATH = Path("./data/processed/pending.csv")
+    PENDING_DATA_PATH = Path("./data/processed/pending.csv")
     ALL_DATA_PATH = Path("./data/processed/full.csv")
     DONE_DATA_PATH = Path("./data/processed/done.csv")
     START_DATE = "2025-10-05"

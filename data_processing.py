@@ -34,7 +34,7 @@ logger.info("Saving Processed Dataset..")
 df_done_cutoff.to_csv(str(settings.DONE_DATA_PATH), index=True, encoding="utf-8")
 
 # Save Pending Dataset
-pending_df.to_csv(str(settings.UNDONE_DATA_PATH), index=True, encoding="utf-8")
+pending_df.to_csv(str(settings.PENDING_DATA_PATH), index=True, encoding="utf-8")
 
 # Save All Data
 df_full = data.copy()
