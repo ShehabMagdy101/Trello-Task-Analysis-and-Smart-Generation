@@ -295,7 +295,7 @@ done_df['weekday'] = pd.Categorical(
 
 # Group by weekday AND list
 weekly_df = (
-    done_df
+    done_df [done_df['origin_list'] != 'other']
     .groupby(['weekday', 'origin_list'])
     .size()
     .reset_index(name='Tasks Completed')
@@ -322,18 +322,42 @@ fig.update_traces(textposition='inside')
 st.plotly_chart(fig, use_container_width=True)
 
 
-calplot_start_date = pd.Timestamp.now()
-calplot_end_date = calplot_start_date + pd.Timedelta(days=60)
-
-done_df_calplot = pending_df.copy()
-
 def remove_timezones(str):
     return str.split()[0]
 
-done_df_calplot = done_df_calplot.dropna(subset=['card_due'])
-done_df_calplot['card_due'] = done_df_calplot['card_due'].astype(str).apply(remove_timezones)
+# done tasks heatmap
 
-counts_df = done_df_calplot['card_due'].value_counts().reset_index()
+done_calplot_start_date = pd.to_datetime(settings.START_DATE).date()
+done_calplot_end_date = pd.Timestamp.today().date()
+
+done_df_calplot = done_df.copy()
+done_df_calplot = done_df_calplot.dropna(subset=['done_date'])
+done_df_calplot['done_date'] = done_df_calplot['done_date'].astype(str).apply(remove_timezones)
+done_counts_df = done_df_calplot['done_date'].value_counts().reset_index()
+done_counts_df.columns = ['done_date', 'count']
+fig = calplot(
+    done_counts_df,
+    x="done_date",
+    y="count",
+    dark_theme=True,
+    title="Done Tasks Heatmap",
+    
+    # colorscale= "blues",
+    # month_lines= False,
+)
+
+st.plotly_chart(fig, use_container_width=True)   
+
+# pending due dates heatmap
+calplot_start_date = pd.Timestamp.now()
+calplot_end_date = calplot_start_date + pd.Timedelta(days=60)
+
+pending_df_calplot = pending_df.copy()
+
+pending_df_calplot = pending_df_calplot.dropna(subset=['card_due'])
+pending_df_calplot['card_due'] = pending_df_calplot['card_due'].astype(str).apply(remove_timezones)
+
+counts_df = pending_df_calplot['card_due'].value_counts().reset_index()
 counts_df.columns = ['card_due', 'count']
 fig = calplot(
     counts_df,
