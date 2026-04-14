@@ -435,7 +435,7 @@ fig.update_xaxes(
 fig.update_yaxes(
     tickmode='array',
     tickvals=counts['card_due'],
-    ticktext=counts['card_due'].dt.strftime('%Y-%m-%d'),
+    ticktext=counts['card_due'].dt.strftime('%d %b'),
     showgrid=True,
     gridcolor='gray'
 )
