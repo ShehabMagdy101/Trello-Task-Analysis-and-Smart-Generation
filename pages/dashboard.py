@@ -1,5 +1,6 @@
 import pandas as pd
-import numpy as np
+# import numpy as np
+import plotly.graph_objects as go
 from plotly_calplot import calplot
 from config import settings
 import streamlit as st
@@ -339,11 +340,22 @@ fig = calplot(
     done_counts_df,
     x="done_date",
     y="count",
+    name="Done Tasks",
     dark_theme=True,
     title="Done Tasks Heatmap",
-    
+    # start_month= done_calplot_start_date.month,
+    # end_month= done_calplot_end_date.month,
     # colorscale= "blues",
-    # month_lines= False,
+    month_lines= False,
+)
+
+fig.update_layout(
+    title={
+        'text': "Done Tasks Heatmap",
+        'y':0.99,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'}
 )
 
 st.plotly_chart(fig, use_container_width=True)   
@@ -379,4 +391,73 @@ fig.update_layout(
         'xanchor': 'center',
         'yanchor': 'top'}
 )
+st.plotly_chart(fig, use_container_width=False)
+
+df = pending_df.copy()
+
+df['card_due'] = pd.to_datetime(df['card_due'], errors='coerce').dt.tz_convert(None).dt.normalize()
+df = df.dropna(subset=['card_due'])
+
+start = pd.Timestamp.today().normalize()
+end = start + pd.DateOffset(months=2)
+
+counts = df.groupby('card_due').size().reset_index()
+counts.columns = ['card_due', 'count']
+
+# Build the full range separately
+full_range_df = pd.DataFrame({'card_due': pd.date_range(start=start, end=end, freq='D')})
+
+# Merge instead of reindex
+counts = full_range_df.merge(counts, on='card_due', how='left').fillna(0)
+counts['count'] = counts['count'].astype(int)
+
+fig = go.Figure([
+    go.Bar(
+        x=counts['count'],
+        y=counts['card_due'],
+        orientation='h'
+    )
+])
+
+fig.update_layout(
+    template='plotly_dark',
+    paper_bgcolor='#111111',
+    plot_bgcolor='#111111',
+    font=dict(color='white'),
+    height=len(counts) * 20
+)
+
+fig.update_xaxes(
+    showticklabels=False,
+    showgrid=False
+)
+
+fig.update_yaxes(
+    tickmode='array',
+    tickvals=counts['card_due'],
+    ticktext=counts['card_due'].dt.strftime('%Y-%m-%d'),
+    showgrid=True,
+    gridcolor='gray'
+)
+
+# Reverse order (latest on top)
+fig.update_yaxes(autorange="reversed")
+
+annotations = []
+max_val = max(counts['count'].max(), 1)
+
+for _, row in counts.iterrows():
+    annotations.append(
+        dict(
+            x=max_val * 1.2,
+            y=row['card_due'],
+            text=str(int(row['count'])),
+            showarrow=False,
+            xanchor='left',
+            font=dict(color='white')
+        )
+    )
+
+fig.update_layout(annotations=annotations)
+
 st.plotly_chart(fig, use_container_width=True)

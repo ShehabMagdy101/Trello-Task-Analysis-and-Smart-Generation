@@ -13,7 +13,7 @@ from model import generate_daily_tasks
 st.divider()
 st.header("🤖 AI Daily Task Planner")
 
-undone_df = pd.read_csv(str(settings.UNDONE_DATA_PATH)).copy()
+undone_df = pd.read_csv(str(settings.PENDING_DATA_PATH)).copy()
 
 if undone_df.empty:
     st.success("All tasks are completed")
