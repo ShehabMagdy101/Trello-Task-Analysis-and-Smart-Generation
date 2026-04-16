@@ -394,37 +394,70 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=False)
 
 df = pending_df.copy()
+due_source_col = 'list' if 'list' in df.columns else None
 
 df['card_due'] = pd.to_datetime(df['card_due'], errors='coerce').dt.tz_convert(None).dt.normalize()
 df = df.dropna(subset=['card_due'])
 
 start = pd.Timestamp.today().normalize()
 end = start + pd.DateOffset(months=2)
-
-counts = df.groupby('card_due').size().reset_index()
-counts.columns = ['card_due', 'count']
-
-# Build the full range separately
 full_range_df = pd.DataFrame({'card_due': pd.date_range(start=start, end=end, freq='D')})
 
-# Merge instead of reindex
-counts = full_range_df.merge(counts, on='card_due', how='left').fillna(0)
-counts['count'] = counts['count'].astype(int)
-
-fig = go.Figure([
-    go.Bar(
-        x=counts['count'],
-        y=counts['card_due'],
-        orientation='h'
+if due_source_col:
+    df[due_source_col] = df[due_source_col].fillna('Unknown')
+    counts = (
+        df.groupby(['card_due', due_source_col])
+        .size()
+        .reset_index(name='count')
     )
-])
+    counts = full_range_df.merge(counts, on='card_due', how='left')
+    counts[due_source_col] = counts[due_source_col].fillna('No Due Cards')
+    counts['count'] = counts['count'].fillna(0).astype(int)
+
+    color_palette = px.colors.qualitative.Safe
+    source_values = counts[due_source_col].dropna().unique()
+    color_map = {
+        source: color_palette[idx % len(color_palette)]
+        for idx, source in enumerate(sorted(source_values))
+    }
+
+    fig = px.bar(
+        counts,
+        x='count',
+        y='card_due',
+        color=due_source_col,
+        orientation='h',
+        barmode='stack',
+        color_discrete_map=color_map,
+        labels={
+            'count': 'Due Cards',
+            'card_due': 'Due Date',
+            due_source_col: 'List'
+        },
+        title='Pending Due Dates by List'
+    )
+else:
+    counts = df.groupby('card_due').size().reset_index()
+    counts.columns = ['card_due', 'count']
+    counts = full_range_df.merge(counts, on='card_due', how='left').fillna(0)
+    counts['count'] = counts['count'].astype(int)
+
+    fig = go.Figure([
+        go.Bar(
+            x=counts['count'],
+            y=counts['card_due'],
+            orientation='h',
+            name='Due Cards'
+        )
+    ])
 
 fig.update_layout(
     template='plotly_dark',
     paper_bgcolor='#111111',
     plot_bgcolor='#111111',
     font=dict(color='white'),
-    height=len(counts) * 20
+    height=len(counts) * 20,
+    legend_title_text='List'
 )
 
 fig.update_xaxes(
@@ -444,9 +477,10 @@ fig.update_yaxes(
 fig.update_yaxes(autorange="reversed")
 
 annotations = []
-max_val = max(counts['count'].max(), 1)
+max_val = max(counts.groupby('card_due')['count'].sum().max(), 1)
 
-for _, row in counts.iterrows():
+daily_totals = counts.groupby('card_due')['count'].sum().reset_index()
+for _, row in daily_totals.iterrows():
     annotations.append(
         dict(
             x=max_val * 1.2,
