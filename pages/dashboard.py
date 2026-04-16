@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly_calplot import calplot
 from config import settings
+from dashboard_theme import DASHBOARD_COLORS
 import streamlit as st
 import plotly.express as px
 
@@ -144,7 +145,7 @@ with right:
         values='count',
         title='Not Done Percentage',
         hole=0.3,
-        color_discrete_sequence=px.colors.cmocean.balance
+        color_discrete_sequence=DASHBOARD_COLORS["categorical"]
     )
     fig.update_layout(
         title_x=0.3,  
@@ -165,7 +166,7 @@ with left:
         values='count',
         title="Done Tasks by List",
         hole=0.3,
-        color_discrete_sequence=px.colors.cmocean.balance
+        color_discrete_sequence=DASHBOARD_COLORS["categorical"]
     )
 
     fig.update_layout(
@@ -204,7 +205,7 @@ with left:
         x='Day',
         y='Tasks Completed',
         color='Tasks Completed',
-        color_continuous_scale='Blues',
+        color_continuous_scale=DASHBOARD_COLORS["continuous_scale"],
         text='Tasks Completed',
         title='Tasks-Day Distribution'
     )
@@ -377,7 +378,7 @@ fig = calplot(
     y="count",
     dark_theme=True,
     title="Pending Tasks Due Dates",
-    colorscale= "blues",
+    colorscale=DASHBOARD_COLORS["heatmap_scale"],
     month_lines= False,
     start_month= calplot_start_date.month,
     end_month= calplot_end_date.month
@@ -414,7 +415,7 @@ if due_source_col:
     counts[due_source_col] = counts[due_source_col].fillna('No Due Cards')
     counts['count'] = counts['count'].fillna(0).astype(int)
 
-    color_palette = px.colors.qualitative.Safe
+    color_palette = DASHBOARD_COLORS["qualitative_fallback"]
     source_values = counts[due_source_col].dropna().unique()
     color_map = {
         source: color_palette[idx % len(color_palette)]
@@ -452,10 +453,10 @@ else:
     ])
 
 fig.update_layout(
-    template='plotly_dark',
-    paper_bgcolor='#111111',
-    plot_bgcolor='#111111',
-    font=dict(color='white'),
+    template=DASHBOARD_COLORS["dark"]["template"],
+    paper_bgcolor=DASHBOARD_COLORS["dark"]["paper_bg"],
+    plot_bgcolor=DASHBOARD_COLORS["dark"]["plot_bg"],
+    font=dict(color=DASHBOARD_COLORS["dark"]["font"]),
     height=len(counts) * 20,
     legend_title_text='List'
 )
@@ -470,7 +471,7 @@ fig.update_yaxes(
     tickvals=counts['card_due'],
     ticktext=counts['card_due'].dt.strftime('%d %b'),
     showgrid=True,
-    gridcolor='gray'
+    gridcolor=DASHBOARD_COLORS["dark"]["grid"]
 )
 
 # Reverse order (latest on top)
@@ -488,7 +489,7 @@ for _, row in daily_totals.iterrows():
             text=str(int(row['count'])),
             showarrow=False,
             xanchor='left',
-            font=dict(color='white')
+            font=dict(color=DASHBOARD_COLORS["dark"]["font"])
         )
     )
 
