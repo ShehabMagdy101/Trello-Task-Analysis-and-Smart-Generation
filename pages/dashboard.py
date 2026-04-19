@@ -6,6 +6,7 @@ from config import settings
 from dashboard_theme import DASHBOARD_COLORS
 import streamlit as st
 import plotly.express as px
+from trello_client import update_card_due_date
 
 st.set_page_config(
     page_title="Task Analytics Dashboard",
@@ -41,6 +42,43 @@ total_tasks, completed_tasks, pending_tasks, completion_rate = compute_metrics(d
 
 st.title("📊 Task Analytics Dashboard")
 st.caption(f"**Period:** {start_date} to {end_date}")
+
+with st.expander("🔧 Update Trello Due Date (Remote)", expanded=False):
+    pending_cards_df = (
+        df[df["status"] == "Not Done"][["card", "card_id", "list", "card_due"]]
+        .dropna(subset=["card_id"])
+        .sort_values(by=["list", "card"])
+    )
+
+    if pending_cards_df.empty:
+        st.info("No pending tasks with card IDs were found.")
+    else:
+        task_label_map = {
+            f"{row.card} ({row.list})": row.card_id
+            for row in pending_cards_df.itertuples(index=False)
+        }
+        selected_label = st.selectbox(
+            "Choose pending task",
+            options=list(task_label_map.keys()),
+            key="due_update_task_selector"
+        )
+        selected_due = st.date_input(
+            "New due date",
+            value=pd.Timestamp.today().date(),
+            key="due_update_date_input"
+        )
+
+        if st.button("Update due date in Trello", type="primary"):
+            selected_card_id = task_label_map[selected_label]
+            try:
+                update_card_due_date(selected_card_id, selected_due)
+                st.success(
+                    "Due date updated in Trello. Run data refresh "
+                    "(`python fetch_trello_data.py` then `python data_processing.py`) "
+                    "to sync local CSV files."
+                )
+            except Exception as exc:
+                st.error(f"Could not update due date: {exc}")
 
 col1, col2, col3= st.columns(3)
 
