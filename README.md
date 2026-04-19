@@ -105,6 +105,15 @@ streamlit run app.py
 
 3. Open the local URL shown in the terminal (usually `http://localhost:8501`).
 
+4. (Optional) Update due dates remotely from the app:
+   - Open **Dashboard** → **"🔧 Update Trello Due Date (Remote)"**.
+   - Select a pending task, choose a date, and click update.
+   - Refresh local CSVs:
+   ```bash
+   python fetch_trello_data.py
+   python data_processing.py
+   ```
+
 ## Project Structure
 
 ```text
