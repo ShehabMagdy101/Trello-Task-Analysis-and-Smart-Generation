@@ -432,6 +432,36 @@ fig.update_layout(
 )
 st.plotly_chart(fig, use_container_width=False)
 
+# Tasks due today table
+st.subheader("Tasks Due Today")
+
+today_start = pd.Timestamp.now(tz="UTC").normalize()
+today_end = today_start + pd.Timedelta(days=1)
+
+pending_due_today = pending_df.copy()
+pending_due_today['card_due'] = pd.to_datetime(
+    pending_due_today['card_due'],
+    errors='coerce',
+    utc=True
+)
+pending_due_today = pending_due_today[
+    (pending_due_today['card_due'] >= today_start) &
+    (pending_due_today['card_due'] < today_end)
+]
+
+if not pending_due_today.empty:
+    st.dataframe(
+        pending_due_today[['card', 'list', 'card_due']]
+        .rename(columns={
+            'card': 'Task Name',
+            'list': 'List',
+            'card_due': 'Due Date'
+        }),
+        use_container_width=True
+    )
+else:
+    st.info("No tasks are due today.")
+
 df = pending_df.copy()
 due_source_col = 'list' if 'list' in df.columns else None
 
