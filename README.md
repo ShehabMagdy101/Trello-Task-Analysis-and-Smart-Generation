@@ -78,6 +78,7 @@ TRELLO_API_KEY=your_trello_api_key
 TRELLO_API_TOKEN=your_trello_api_token
 BOARD_ID=your_trello_board_id
 GOOGLE_API_KEY=your_google_ai_api_key
+MISTRAL_API_KEY=your_mistral_api_key
 ```
 
 ### How to get required values
@@ -104,6 +105,20 @@ streamlit run app.py
 ```
 
 3. Open the local URL shown in the terminal (usually `http://localhost:8501`).
+
+4. (Optional) Update due dates remotely from the app:
+   - Open **Dashboard** → **"🔧 Update Trello Due Date (Remote)"**.
+   - Select a pending task, choose a date, and click update.
+   - Refresh local CSVs:
+   ```bash
+   python fetch_trello_data.py
+   python data_processing.py
+   ```
+
+5. (Optional) Use **Replanner** page for bulk smart due-date replanning:
+   - Choose model provider (`gemini` or `mistral`).
+   - Enter instruction (e.g., "clear 2026-04-20 from all tasks").
+   - Generate replanning dataset, review it, then apply updates to Trello.
 
 ## Project Structure
 
