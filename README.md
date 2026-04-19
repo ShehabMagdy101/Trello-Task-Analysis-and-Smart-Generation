@@ -115,11 +115,6 @@ streamlit run app.py
    python data_processing.py
    ```
 
-5. (Optional) Use **Replanner** page for bulk smart due-date replanning:
-   - Choose model provider (`gemini` or `mistral`).
-   - Enter instruction (e.g., "clear 2026-04-20 from all tasks").
-   - Generate replanning dataset, review it, then apply updates to Trello.
-
 ## Project Structure
 
 ```text
