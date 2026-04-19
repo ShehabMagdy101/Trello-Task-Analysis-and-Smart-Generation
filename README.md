@@ -78,6 +78,7 @@ TRELLO_API_KEY=your_trello_api_key
 TRELLO_API_TOKEN=your_trello_api_token
 BOARD_ID=your_trello_board_id
 GOOGLE_API_KEY=your_google_ai_api_key
+MISTRAL_API_KEY=your_mistral_api_key
 ```
 
 ### How to get required values
