@@ -19,7 +19,7 @@ def _build_llm(provider: str):
             raise ValueError("Missing GOOGLE_API_KEY in app.env")
 
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-3-flash-preview",
             google_api_key=api_key,
             temperature=0.2,
         )
