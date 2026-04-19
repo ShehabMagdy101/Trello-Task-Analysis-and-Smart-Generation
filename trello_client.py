@@ -21,8 +21,7 @@ def update_card_due_date(card_id: str, due_date: date) -> None:
     if not card_id:
         raise ValueError("Card ID is required")
 
-    # Set due time to 11:59 PM (UTC) for every update.
-    due_dt = datetime.combine(due_date, time(23, 59)).replace(tzinfo=timezone.utc)
+    due_dt = datetime.combine(due_date, time.min).replace(tzinfo=timezone.utc)
     due_value = due_dt.isoformat().replace("+00:00", "Z")
 
     url = f"https://api.trello.com/1/cards/{card_id}"

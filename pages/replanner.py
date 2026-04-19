@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
@@ -8,8 +10,7 @@ from trello_client import update_card_due_date
 st.set_page_config(layout="wide", page_title="AI Replanner")
 st.header("🧠 AI Due-Date Replanner")
 st.caption(
-    "Generate a replanning dataset first, then apply due-date changes to Trello. "
-    "Applied due times are standardized to 11:59 PM."
+    "Generate a replanning dataset first, then apply due-date changes to Trello."
 )
 
 pending_df = pd.read_csv(str(settings.PENDING_DATA_PATH)).copy()
@@ -107,7 +108,7 @@ if apply_clicked:
                 continue
 
             try:
-                parsed_due = pd.to_datetime(new_due, errors="raise").date()
+                parsed_due = datetime.strptime(str(new_due), "%Y-%m-%d").date()
                 update_card_due_date(str(card_id), parsed_due)
                 applied += 1
             except Exception as exc:
