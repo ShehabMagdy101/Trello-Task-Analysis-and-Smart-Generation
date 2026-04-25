@@ -397,7 +397,7 @@ fig.update_layout(
         'yanchor': 'top'}
 )
 
-st.plotly_chart(fig, use_container_width=True)   
+st.plotly_chart(fig, use_container_width=True)
 
 # pending due dates heatmap
 calplot_start_date = pd.Timestamp.now()
@@ -431,6 +431,23 @@ fig.update_layout(
         'yanchor': 'top'}
 )
 st.plotly_chart(fig, use_container_width=False)
+
+# Overdue tasks
+st.subheader("Overdue Tasks")
+today = pd.Timestamp.now(tz="UTC").normalize()
+overdue_tasks = pending_df.copy()
+overdue_tasks['card_due'] = pd.to_datetime(
+    overdue_tasks['card_due'],
+    errors='coerce',
+    utc=True
+)
+overdue_tasks = overdue_tasks[overdue_tasks['card_due'] < today]
+st.dataframe(overdue_tasks[['card', 'list', 'card_due']].rename(columns={
+            'card': 'Task Name',
+            'list': 'List',
+            'card_due': 'Due Date'
+            }),
+            use_container_width=True)
 
 # Tasks due today table
 st.subheader("Tasks Due Today")
