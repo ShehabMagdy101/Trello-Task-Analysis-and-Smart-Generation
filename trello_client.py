@@ -3,7 +3,6 @@ from datetime import date, datetime, time, timezone
 import requests
 from dotenv import dotenv_values
 
-
 env_values = dotenv_values("./app.env")
 API_KEY = env_values.get("TRELLO_API_KEY")
 API_TOKEN = env_values.get("TRELLO_API_TOKEN")
@@ -21,7 +20,7 @@ def update_card_due_date(card_id: str, due_date: date) -> None:
     if not card_id:
         raise ValueError("Card ID is required")
 
-    due_dt = datetime.combine(due_date, time(23, 59)).replace(tzinfo=timezone.utc)
+    due_dt = datetime.combine(due_date, time(20, 59)).replace(tzinfo=timezone.utc)
     due_value = due_dt.isoformat().replace("+00:00", "Z")
 
     url = f"https://api.trello.com/1/cards/{card_id}"

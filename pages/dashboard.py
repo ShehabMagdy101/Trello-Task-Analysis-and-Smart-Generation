@@ -479,6 +479,30 @@ if not pending_due_today.empty:
 else:
     st.info("No tasks are due today.")
 
+st.subheader("Tasks Due Tommorow")
+pending_due_tommorow = pending_df.copy()
+pending_due_tommorow['card_due'] = pd.to_datetime(
+    pending_due_tommorow['card_due'],
+    errors='coerce',
+    utc=True
+)
+tomorrow = today + pd.Timedelta(days=1)
+tomorrow_end = tomorrow + pd.Timedelta(days=1)
+
+pending_due_tommorow = pending_due_tommorow[
+    pending_due_tommorow["card_due"].dt.date == (today + pd.Timedelta(days=1)).date()
+]
+st.dataframe(
+        pending_due_tommorow[['card', 'list', 'card_due']]
+        .rename(columns={
+            'card': 'Task Name',
+            'list': 'List',
+            'card_due': 'Due Date'
+        }),
+        use_container_width=True
+    )
+
+
 df = pending_df.copy()
 due_source_col = 'list' if 'list' in df.columns else None
 
