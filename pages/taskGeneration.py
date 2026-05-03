@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 # Generate Tasks
-from model import generate_daily_tasks
+from task_generator import generate_daily_tasks
 st.divider()
 st.header("🤖 AI Daily Task Planner")
 
@@ -88,7 +88,7 @@ else:
                                         st.markdown(f"**List:** {task['list']}")
                                         if include_reasoning:
                                             st.markdown(f"**Why now:** {task['reason']}")
-                                        
+                                        st.markdown(f"**Goal:** {task['goal']}")
                                 
                                 st.markdown("---")
             except Exception as e:

@@ -1,4 +1,9 @@
 from pathlib import Path
+import markdown
+
+def user_goals(md_path):
+    with open(md_path, 'r', encoding='utf-8') as f:
+        return f.read()
 
 class Settings():
     MODEL = "gemini-3-flash-preview"
@@ -8,23 +13,8 @@ class Settings():
     DONE_DATA_PATH = Path("./data/processed/done.csv")
     START_DATE = "2025-10-05"
     DONE_LIST_NAME = "Done"
-    # LIST_WEIGHTS = {
-    #     # "Tech Study": 1,
-    #     # "Tech Projects": 1,
-    #     # "علوم شرعية": 0.5,
-    #     # "Reading": 0.6,
-    #     # "Writing": 0.6,
-    #     # "Carreer": 0.8,
-    #     # "Planting": 0.5,
-    #     # "House Chores": 0.2,
-    #     # "Work": 0.4,
-    #     # "Fitness": 0.2
-    # }
-    # DEFAULT_LIST_SCORE = 0.5
     OLD_TASK_AGE = 30
-    # NOTES = """
-    # - last semester in the faculty so i need to ensure high gpa so tech study is priotized
-    # - last semester where i will discuss phase 2 of the graduation project 
-    # - بعيد عن الدروس الشرعية بقالي فترة كبيرة فلازم أبدأ أرجع براحة
-    # """
+    GOALS = user_goals("goals.md")
+
+
 settings = Settings()
