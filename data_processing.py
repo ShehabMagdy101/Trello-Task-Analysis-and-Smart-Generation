@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 logger.info("Loading Raw Dataset")
 data = pd.read_csv(str(settings.RAW_DATA_PATH))
 data.loc[data['list'] == settings.DONE_LIST_NAME, 'status'] = 'Done'
-pending_df = data[data['status'] == 'Not Done'][["list", "card", "card_due", "card_age"]]
+pending_df = data[data['status'] == 'Not Done'][["list", "card", "card_id", "card_due", "card_age"]]
 
 logger.info("Applying Data Processing")
 
