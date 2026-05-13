@@ -9,6 +9,7 @@ pages = {
     "Pages": [
     st.Page(r".\pages\dataset.py", title="Dataset"),
     st.Page(r".\pages\dashboard.py", title="Dashboard"),
+    st.Page(r".\pages\calendar.py", title="Calendar"),
     st.Page(r".\pages\taskGeneration.py", title="Generate Tasks"),
     st.Page(r".\pages\replanner.py", title="Replanner")
     ],
