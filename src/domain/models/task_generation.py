@@ -1,7 +1,6 @@
-from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 
-class Task(BaseModel):
+class GeneratedTask(BaseModel):
     list: str = Field(description="The Trello list/category")
     card: str = Field(description="Task name/description")
     priority: str = Field(description="Priority level: high, medium, or low")
@@ -10,7 +9,5 @@ class Task(BaseModel):
     goal: str = Field(description="Task goal alignment with user predefined goals")
 
 class DailyTaskPlan(BaseModel):
-    tasks: list[Task] = Field(description="List of recommended tasks for today")
+    tasks: list[GeneratedTask] = Field(description="List of recommended tasks for today")
     reasoning: str | None = Field(default=None, description="Overall reasoning for the task selection (optional)")
-
-parser = JsonOutputParser(pydantic_object=DailyTaskPlan)

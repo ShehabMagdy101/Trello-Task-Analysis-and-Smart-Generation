@@ -2,8 +2,10 @@ import streamlit as st
 import sys
 from pathlib import Path
 
-# Add src to sys.path so we can import from src.*
-sys.path.append(str(Path(__file__).parent))
+# Add project root to sys.path
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
 
 from src.application.data_pipeline.fetcher import fetch_data
 from src.application.data_pipeline.processor import process_data
@@ -11,22 +13,20 @@ from src.application.data_pipeline.processor import process_data
 # side bar navigation
 st.set_page_config(page_title='Smart Tasking', layout='wide')
 
-# We'll use the new pages in src/presentation/streamlit/pages/
-pages_dir = Path("src/presentation/streamlit/pages")
-
 pages = {
     "Pages": [
-    st.Page(str(pages_dir / "dashboard.py"), title="Dashboard"),
-    st.Page(str(pages_dir / "calendar.py"), title="Calendar"),
-    st.Page(str(pages_dir / "task_generator.py"), title="Generate Tasks"),
-    st.Page(str(pages_dir / "replanner.py"), title="Replanner"),
-    st.Page(str(pages_dir / "goals.py"), title="Goals"),
-    st.Page(str(pages_dir / "judger.py"), title="Judger")
+    # st.Page(r".\pages\dataset.py", title="Dataset"), # Missing in current pages/
+    st.Page("pages/dashboard.py", title="Dashboard"),
+    st.Page("pages/calendar.py", title="Calendar"),
+    st.Page("pages/task_generator.py", title="Generate Tasks"),
+    st.Page("pages/replanner.py", title="Replanner"),
+    st.Page("pages/goals.py", title="Goals"),
+    st.Page("pages/judger.py", title="Judger")
     ],
 }
 
 def refresh_data() -> None:
-    """Run the new data refresh pipeline."""
+    """Run the same data refresh pipeline."""
     try:
         fetch_data()
         process_data()

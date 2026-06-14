@@ -32,7 +32,7 @@ A Streamlit-based productivity tool that:
 
 ## Architecture
 
-1. **Data ingestion**: `fetch_trello_data.py`
+1. **Data ingestion**: `fetcher.py`
    - Reads Trello API credentials from `app.env`.
    - Fetches cards/lists/actions and builds tabular task data.
    - Writes processed CSV files used by the UI.
@@ -92,10 +92,11 @@ MISTRAL_API_KEY=your_mistral_api_key
 
 ## Run the App
 
-1. Fetch fresh Trello data:
+1. Fetch and process fresh Trello data:
 
 ```bash
-python fetch_trello_data.py
+python -m src.application.data_pipeline.fetcher
+python -m src.application.data_pipeline.processor
 ```
 
 2. Start Streamlit:
@@ -111,8 +112,8 @@ streamlit run app.py
    - Select a pending task, choose a date, and click update.
    - Refresh local CSVs:
    ```bash
-   python fetch_trello_data.py
-   python data_processing.py
+   python -m src.application.data_pipeline.fetcher
+   python -m src.application.data_pipeline.processor
    ```
 
 ## Project Structure
@@ -120,15 +121,26 @@ streamlit run app.py
 ```text
 .
 ├── app.py
-├── config.py
-├── fetch_trello_data.py
-├── model.py
-├── prompt.py
-├── output_format.py
-├── pages/
-│   ├── dashboard.py
-│   ├── dataset.py
-│   └── taskGeneration.py
+├── run_app.bat
+├── run_app.sh
+├── src/
+│   ├── application/
+│   │   ├── data_pipeline/
+│   │   │   ├── fetcher.py
+│   │   │   └── processor.py
+│   │   ├── replanning/
+│   │   └── task_generation/
+│   ├── core/
+│   │   └── config.py
+│   ├── domain/
+│   ├── infrastructure/
+│   └── presentation/
+│       └── streamlit/
+│           ├── app.py
+│           └── pages/
+├── Infrastructure/
+│   └── persistence/
+│       └── data/
 ├── docs/
 └── requirements.txt
 ```
@@ -162,7 +174,7 @@ Examples:
 
 ### Empty charts or no generated tasks
 
-- Run `python fetch_trello_data.py` first.
+- Run `python fetcher.py` first.
 - Confirm CSV outputs exist under configured `data/` paths.
 
 ## Roadmap

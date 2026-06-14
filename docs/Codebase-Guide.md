@@ -10,7 +10,7 @@ This project is a **Streamlit-based productivity app** that:
 
 The app is organized as a simple pipeline:
 
-1. **Data ingestion (`fetch_trello_data.py`)**
+1. **Data ingestion (`fetcher.py`)**
    - Reads Trello credentials from `app.env`.
    - Calls Trello APIs for cards/lists/actions.
    - Builds a combined dataframe with:
@@ -46,14 +46,14 @@ The app is organized as a simple pipeline:
 ## Directory map
 
 - `app.py`: Streamlit entrypoint and navigation.
-- `pages/`: Streamlit pages.
-- `fetch_trello_data.py`: ETL/feature computation from Trello.
-- `model.py`: LLM setup and task-generation function.
-- `prompt.py`: prompt templates.
-- `output_format.py`: response schema + parser.
-- `config.py`: configurable constants and scoring weights.
-- `docs/`: requirements and usage notes.
-- `requirements.txt`: dependency lock list.
+- `src/application/data_pipeline/`: ETL and processing logic (`fetcher.py`, `processor.py`).
+- `src/application/task_generation/`: LLM task-generation service and prompts.
+- `src/application/replanning/`: LLM task-replanning service and prompts.
+- `src/core/config.py`: Configurable constants and data paths.
+- `src/presentation/streamlit/`: Streamlit app and pages.
+- `Infrastructure/persistence/data/`: CSV data storage.
+- `docs/`: Requirements and usage notes.
+- `requirements.txt`: Dependency lock list.
 
 ## Important things to know before editing
 
@@ -62,11 +62,11 @@ The app is organized as a simple pipeline:
    - Gemini: `GOOGLE_API_KEY`
 
 2. **Data files are generated, not hand-written**
-   - Most pages expect CSVs from `fetch_trello_data.py`.
+   - Most pages expect CSVs from `fetcher.py`.
    - If CSVs are stale/missing, dashboard and planner behavior can look broken.
 
 3. **Scoring logic lives in one place**
-   - Task prioritization helpers are calculated in `fetch_trello_data.py`.
+   - Task prioritization helpers are calculated in `fetcher.py`.
    - List-based importance is configured in `config.py` (`LIST_WEIGHTS`).
 
 4. **LLM output is schema-constrained**
@@ -83,7 +83,7 @@ The app is organized as a simple pipeline:
    - Understand what CSV columns are produced and how they’re used downstream.
 
 2. **Trace one full user flow**
-   - `run_app.sh` -> `fetch_trello_data.py` output -> `pages/taskGeneration.py` -> `model.generate_daily_tasks()`.
+   - `run_app.sh` -> `fetcher.py` output -> `pages/taskGeneration.py` -> `model.generate_daily_tasks()`.
 
 3. **Study prompt/schema alignment**
    - Check that prompt instructions in `prompt.py` are consistent with fields required by `output_format.py`.
@@ -104,5 +104,5 @@ The app is organized as a simple pipeline:
   - done-transition parsing from Trello actions.
 - Refactor repeated page configuration into a single place.
 - Add a lightweight “preflight” check page for env vars and data-file availability.
-- Harden `fetch_trello_data.py` with explicit HTTP status checks and friendly error messages.
+- Harden `fetcher.py` with explicit HTTP status checks and friendly error messages.
 

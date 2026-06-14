@@ -10,9 +10,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 from dotenv import dotenv_values
 
-from config import settings
+from src.core.config import settings
 
-st.set_page_config(page_title="Task Calendar", page_icon="📅", layout="wide")
+# st.set_page_config(page_title="Task Calendar", page_icon="📅", layout="wide")
 
 LOCAL_EVENT_STORAGE_KEY = "smart-tasking-local-calendar-events"
 SYNCFUSION_VERSION = "27.2.5"
@@ -397,7 +397,11 @@ st.caption(
     "events you create here stay local to this browser and do not touch Trello."
 )
 
-credentials = dotenv_values("./app.env")
+# Try to find app.env in the project root
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+env_path = ROOT_DIR / "app.env"
+credentials = dotenv_values(str(env_path) if env_path.exists() else "./app.env")
+
 trello_credentials = {
     "apiKey": credentials.get("TRELLO_API_KEY"),
     "apiToken": credentials.get("TRELLO_API_TOKEN"),

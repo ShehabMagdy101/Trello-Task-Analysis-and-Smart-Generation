@@ -1,16 +1,13 @@
-
 import streamlit as st
 import pandas as pd
-from config import settings
+from src.core.config import settings
+from src.application.task_generation.service import generate_daily_tasks
 
-st.set_page_config(
-    layout="centered",   # or "centered"
-    page_title="My App"
-)
+# st.set_page_config(
+#     layout="centered",   # or "centered"
+#     page_title="Task Generator"
+# )
 
-# Generate Tasks
-from task_generator import generate_daily_tasks
-st.divider()
 st.header("🤖 AI Daily Task Planner")
 
 undone_df = pd.read_csv(str(settings.PENDING_DATA_PATH)).copy()
@@ -49,8 +46,6 @@ else:
                     include_reasoning=include_reasoning
                 )
 
-               
-
                 if include_reasoning and result.get('reasoning'):
                     st.subheader("Overall Strategy")
                     st.info(result['reasoning'])
@@ -64,13 +59,10 @@ else:
                             priority = task['priority'].lower()
                             if priority == 'high':
                                 badge = "🔴"
-                                color = "#ffebee"
                             elif priority == 'medium':
                                 badge = "🟡"
-                                color = "#fff9c4"
                             else:
                                 badge = "🟢"
-                                color = "#e8f5e9"
 
                              # Create expandable task card
                             with st.container():

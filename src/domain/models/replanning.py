@@ -1,6 +1,4 @@
-from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
-
 
 class ReplannedTask(BaseModel):
     card_id: str = Field(description="Exact Trello card ID")
@@ -18,6 +16,3 @@ class ReplanResult(BaseModel):
     tasks_to_update: list[ReplannedTask] = Field(
         description="Dataset of tasks selected for due-date updates"
     )
-
-
-replanner_parser = JsonOutputParser(pydantic_object=ReplanResult)

@@ -1,14 +1,19 @@
 from datetime import date
-
+from pathlib import Path
 from dotenv import dotenv_values
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.output_parsers import JsonOutputParser
 
-from replanner_output_format import replanner_parser
-from replanner_prompt import replanner_system_prompt, replanner_user_prompt
+from src.application.replanning.prompts import replanner_system_prompt, replanner_user_prompt
+from src.domain.models.replanning import ReplanResult
 
-env_values = dotenv_values("./app.env")
+# Try to find app.env in the project root
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+env_path = ROOT_DIR / "app.env"
+env_values = dotenv_values(str(env_path) if env_path.exists() else "./app.env")
 
+replanner_parser = JsonOutputParser(pydantic_object=ReplanResult)
 
 def _build_llm(provider: str):
     provider = provider.lower().strip()

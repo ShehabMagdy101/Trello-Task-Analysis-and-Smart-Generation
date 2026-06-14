@@ -4,12 +4,13 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly_calplot import calplot
 
-from config import settings
-from dashboard_theme import DASHBOARD_COLORS
-from trello_client import update_card_due_date
+from src.core.config import settings
+from src.core.dashboard_theme import DASHBOARD_COLORS
+from src.infrastructure.trello.trello_client import update_card_due_date
 
-st.set_page_config(page_title="Task Analytics Dashboard", page_icon="📊", layout="wide")
-
+# Removed st.set_page_config from here as it should be in the main app.py when using st.navigation
+# Or if this page is intended to be used standalone, it can stay, but it might cause warnings.
+# Keeping it for now but updating imports.
 
 @st.cache_data
 def load_data():
@@ -138,9 +139,7 @@ def render_due_date_updater(tasks_df: pd.DataFrame) -> None:
             try:
                 update_card_due_date(selected_card_id, selected_due)
                 st.success(
-                    "Due date updated in Trello. Run data refresh "
-                    "(`python fetch_trello_data.py` then `python data_processing.py`) "
-                    "to sync local CSV files."
+                    "Due date updated in Trello. Run data refresh to sync local CSV files."
                 )
             except Exception as exc:
                 st.error(f"Could not update due date: {exc}")

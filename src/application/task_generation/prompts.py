@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from config import settings
+from src.core.config import settings
 
 class SystemPrompt(BaseModel):
     model_name: str = settings.MODEL

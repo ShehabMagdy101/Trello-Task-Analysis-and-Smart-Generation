@@ -1,16 +1,21 @@
 @echo off
-cd /d "C:\Users\sheha\Desktop\Smart Tasking Project"
+cd /d "%~dp0"
 
 REM Activate venv
-call venv\Scripts\activate
+if exist venv\Scripts\activate (
+    call venv\Scripts\activate
+)
 
 REM Run fetch script
-python fetch_trello_data.py
+echo Fetching Trello data...
+python -m src.application.data_pipeline.fetcher
 
 REM Apply Processing
-python data_processing.py
+echo Processing data...
+python -m src.application.data_pipeline.processor
 
 REM Run streamlit app
+echo Starting Streamlit app...
 streamlit run app.py
 
 pause

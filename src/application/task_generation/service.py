@@ -1,12 +1,18 @@
 from dotenv import dotenv_values
-env_values = dotenv_values("./app.env")
-api_key = env_values["GOOGLE_API_KEY"]
-
-from config import settings
-from prompt import system_prompt, user_prompt
+from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-from output_format import parser
+from langchain_core.output_parsers import JsonOutputParser
+
+from src.core.config import settings
+from src.application.task_generation.prompts import system_prompt, user_prompt
+from src.domain.models.task_generation import DailyTaskPlan
+
+# Try to find app.env in the project root
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+env_path = ROOT_DIR / "app.env"
+env_values = dotenv_values(str(env_path) if env_path.exists() else "./app.env")
+api_key = env_values.get("GOOGLE_API_KEY")
 
 llm = ChatGoogleGenerativeAI(
     model=settings.MODEL,
@@ -14,14 +20,12 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.7,
 )
 
+parser = JsonOutputParser(pydantic_object=DailyTaskPlan)
+
 chat_prompt = ChatPromptTemplate.from_messages([
     ("system", system_prompt.prompt_text + "\n\n{format_instructions}"),
     ("user", user_prompt.prompt_text)
 ])
-
-
-
-parser = parser
 
 chain = chat_prompt | llm | parser
 

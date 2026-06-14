@@ -3,11 +3,11 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from config import settings
-from replanner_model import generate_replan_dataset
-from trello_client import update_card_due_date
+from src.core.config import settings
+from src.application.replanning.service import generate_replan_dataset
+from src.infrastructure.trello.trello_client import update_card_due_date
 
-st.set_page_config(layout="wide", page_title="AI Replanner")
+# st.set_page_config(layout="wide", page_title="AI Replanner")
 st.header("🧠 AI Due-Date Replanner")
 st.caption(
     "Generate a replanning dataset first, then apply due-date changes to Trello."

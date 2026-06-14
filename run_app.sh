@@ -2,11 +2,16 @@
 
 cd "$(dirname "$0")" || exit
 
-echo "Activating virtual environment..."
-source venv/bin/activate
+# Activate venv
+if [ -d "venv" ]; then
+    source venv/bin/activate
+fi
 
 echo "Fetching Trello data..."
-python3 fetch_trello_data.py
+python3 -m src.application.data_pipeline.fetcher
+
+echo "Processing data..."
+python3 -m src.application.data_pipeline.processor
 
 echo "Starting Streamlit app..."
 streamlit run app.py
